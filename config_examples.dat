@@ -1,0 +1,218 @@
+
+# example 1
+X0              323.0         
+Y0              152.24          
+FUNCTION BrokenExponentialDisk3D
+PA              90.0          
+inc             89.7          fixed
+J_0             0.0080        0.0,10 # example
+h1              1000          fixed
+h2              12.0          1,1000
+r_break         75            fixed
+alpha           0.1           fixed
+n               100           fixed
+z_0             2             0.05,10
+
+
+# example 2
+X0              322.4         
+Y0              152.2         # example
+FUNCTION Gaussian
+PA              90            fixed
+ell             0.84          fixed
+I_0             3.77          2,6
+sigma           2.45          fixed
+
+
+# example 3
+X0              196.3          
+Y0              101.7          # example
+FUNCTION Sersic_GenEllipse
+PA              90.0           
+ell             0.9
+c0              0.5            fixed
+n               1.0            fixed
+I_e             0.1
+r_e             25
+
+
+# example 4
+X0             192.9           190,196
+Y0             101.3           98,104
+FUNCTION PointSource
+I_tot          1.0             0.0,10 # example
+
+
+# example 5
+X0              194.7         
+Y0              101.7         
+FUNCTION ExponentialDisk3D
+PA              91.4          # example   
+inc             87.1          fixed
+J_0             0.003400      0.0,10
+h               16            1,1000
+n               100           fixed
+z_0             2.15          0.05,10
+
+
+# example 6
+X0          191.5          186.5,196.5
+Y0          191.5          186.5,196.5
+FUNCTION EdgeOnDisk
+PA          154.0          -1000,1000 # example
+L_0         0.0038716      1e-5,100
+h           19.2           1,300
+n           1000000.0      fixed
+z_0         4.79           0.1,50
+
+
+# example 7
+X0          282.5          277.5,287.5
+Y0          282.5          277.5,287.5
+FUNCTION EdgeOnDisk
+PA          90.0           -1000,1000
+L_0         0.0008506      1e-5,100
+h           28.2           1,300
+n           1000000.0      fixed
+z_0         7.06           0.1,50 # example
+
+
+# example 8
+X0             226.8           222,232
+Y0             102.3           99.3,105.3
+FUNCTION Gaussian
+PA             112             fixed
+ell            0.5             0.1,0.6
+I_0            0.05            0.0,10 # example
+sigma          3.0             0.1,10
+
+
+# example 9
+X0      197.5662 # +/- 0.2267 # example
+Y0      197.3517 # +/- 0.2225
+FUNCTION EdgeOnDisk
+PA      134.467 # +/- 0.13657
+L_0     0.00251128 # +/- 7.7931e-05
+h       20.2361 # +/- 0.32351
+n         1e+06 # +/- 0
+z_0      2.6973 # +/- 0.068622
+
+
+# example 10
+X0        132.0         fixed
+Y0        68.6          fixed
+FUNCTION EdgeOnDisk
+PA        90
+L_0       0.1           #example
+h         20
+n         1000
+z_0       5
+
+
+# example 11
+X0        132.0         fixed
+Y0        68.6          fixed
+FUNCTION Exponential
+PA        90
+ell       0.92          fixed #example
+I_0       0.1
+h         20
+
+
+# example 12
+X0         130.5          fixed
+Y0         84.7           84.5,85
+FUNCTION Gaussian
+PA         90             0,180
+ell        0.2            0.001,0.7
+I_0        0.1            #example
+sigma      2              fixed
+
+
+# example 13
+X0        132.0         fixed
+Y0        68.6          fixed
+FUNCTION Sersic
+PA        90            # example
+ell       0.92
+n         0.5
+I_e       0.1
+r_e       20
+
+
+# example 14
+X0        132.0         # example
+Y0        68.6          fixed
+FUNCTION Exponential
+PA        90            0.0,180
+ell       0.91542       fixed
+I_0       0.1           0.0,100
+h         20            # example
+
+
+# example 15
+X0              347.8         345,350 # example
+Y0              163.1         fixed    
+FUNCTION ExponentialDisk3D
+PA              89.2            
+inc             84.9          fixed
+J_0             0.00121       0.0,10
+h               41            1,1000
+n               100           fixed
+z_0             0.58          0.05,10
+
+
+# example 16
+X0        132.0         0,1000
+Y0        68.6          0,1000
+FUNCTION EdgeOnDisk
+PA        90            fixed     # example
+L_0       0.1           0.0,100
+h         20            0.1,999
+n         1000          fixed
+z_0       5             0.1,15
+
+
+# example 17
+X0              242.3         
+Y0              161.76         161.75,161.77 # example
+FUNCTION PointSource
+I_tot           0.42           0.0,10
+
+
+# example 18
+X0          348                  # +/- 0.0085
+Y0          163                  # +/- 0.0009
+FUNCTION ExponentialDisk3D
+PA          90.0                 # +/- 0.0016888 #example
+inc         90.0                 # +/- 0
+J_0         0.00121298           # +/- 9.9536e-06
+h           41.0912              # +/- 0.0099905
+n           100.0                # +/- 0
+z_0         0.58083              # +/- 0.0049136
+
+
+# example 19
+X0        131.9         fixed  # example
+Y0        68.6          fixed
+FUNCTION BrokenExponentialDisk3D
+PA        91.1          fixed
+inc       89.7          fixed   # (Xilouris et al. 1999)
+J_0       0.0001        0.00001,0.1
+h1        15            3,200
+h2        5             0.5,40
+r_break   32.6          fixed
+alpha     100           fixed
+n         1e6           fixed
+z_0       7.0           1,100
+
+
+# example 20
+X0        10.0          fixed
+Y0        20.0          fixed
+FUNCTION Moffat
+PA        0.0           # example
+ell       0.1           0.0,1.0
+I_0       0.5           0.0,100
+fwhm      1.0
+beta      0.1           fixed

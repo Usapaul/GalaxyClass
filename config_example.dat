@@ -1,0 +1,24 @@
+
+X0              298.5         
+Y0              155.0         
+FUNCTION Sersic_GenEllipse
+PA              90.2          -1800,1800
+ell             0.899         0.0,0.999
+c0              -0.5          fixed
+n               1.5           fixed
+I_e             0.11          0.0,100
+r_e             26            0.1,100
+FUNCTION PointSource
+I_tot           48.5          0.0,1e3
+
+
+X0              250.8         243,258
+Y0              154.0         151,158
+FUNCTION Gaussian
+PA              90.0          fixed
+ell             0.0           fixed
+I_0             0.18          0.0,100
+sigma           2.4           0.1,7.0
+
+
+

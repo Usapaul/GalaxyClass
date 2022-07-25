@@ -1,0 +1,12 @@
+SIMPLE  =                    T / file does conform to FITS standard             
+BITPIX  =                  -32 / number of bits per data pixel                  
+NAXIS   =                    2 / number of data axes                            
+NAXIS1  =                  100 / length of data axis 1                          
+NAXIS2  =                  100 / length of data axis 2                          
+EXTEND  =                    T / FITS dataset may contain extensions            
+COMMENT   FITS (Flexible Image Transport System) format is defined in 'Astronomy
+COMMENT   and Astrophysics', volume 376, page 359; bibcode: 2001A&A...376..359H 
+COMMENT                                                                         
+DATE    = '2000-01-01T00:00:00' / file creation date (YYYY-MM-DDThh:mm:ss UT)   
+HISTORY Header created from example header text file
+HISTORY and known data shape

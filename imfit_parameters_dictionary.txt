@@ -1,0 +1,26 @@
+BrokenExponential: PA ell I_0 h1 h2 r_break alpha
+BrokenExponential2D: PA I_0 h1 h2 r_break alpha h_z
+BrokenExponentialDisk3D: PA inc J_0 h1 h2 r_break alpha n z_0
+Core-Sersic: PA ell n I_b r_e r_b alpha gamma
+EdgeOnDisk: PA L_0 h n z_0
+EdgeOnRing: PA I_0 r sigma_r sigma_z
+EdgeOnRing2Side: PA I_0 r sigma_r_in sigma_r_out sigma_z
+Exponential: PA ell I_0 h
+ExponentialDisk3D: PA inc J_0 h n z_0
+Exponential_GenEllipse: PA ell c0 I_0 h
+FerrersBar2D: PA ell c0 n I_0 a_bar
+FerrersBar3D: PA inc barPA J_0 R_bar q q_z n
+FlatBar: PA ell deltaPA_max I_0 h1 h2 r_break alpha
+FlatSky: I_sky
+Gaussian: PA ell I_0 sigma
+GaussianRing: PA ell A R_ring sigma_r
+GaussianRing2Side: PA ell A R_ring sigma_r_in sigma_r_out
+GaussianRing3D: PA inc PA_ring ell J_0 a_ring sigma h_z
+GaussianRingAz: PA ell A_maj A_min_rel R_ring sigma_r
+ModifiedKing: PA ell I_0 r_c r_t alpha
+ModifiedKing2: PA ell I_0 r_c c alpha
+Moffat: PA ell I_0 fwhm beta
+PointSource: I_tot
+Sersic: PA ell n I_e r_e
+Sersic_GenEllipse: PA ell c0 n I_e r_e
+TiltedSkyPlane: I_0 m_x m_y
