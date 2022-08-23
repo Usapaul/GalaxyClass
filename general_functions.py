@@ -1,6 +1,29 @@
 
 from datetime import datetime
 
+import numpy as np
+
+# -----------------------------------------------
+
+
+def is_python_simple_type(input_object):
+    ''' Checks if input_object is of simple type (to write a JSON) '''
+    if isinstance(input_object, str | bool | int | float):
+        return True
+    elif isinstance(input_object, list | tuple):
+        return all(is_python_simple_type(item) for item in input_object)
+    elif isinstance(input_object, dict):
+        keys_list = all(is_python_simple_type(key)
+                        for key in input_object.keys())
+        values_list = all(is_python_simple_type(value)
+                        for value in input_object.values())
+        return all(keys_list + values_list)
+    else:
+        return False
+
+
+
+
 def dict_pair_to_text(key, value):
     ''' Returnes a text block (4 lines) 
         which fully describes the key and the value of a dict
@@ -30,6 +53,7 @@ def dict_pair_to_text(key, value):
     return text_block
 
 
+
 def read_value_with_type(input_value, type_str):
     ''' Just returnes a value in the type if is specified in text
         Example: fun(150, "<class 'float'>") = 150.0
@@ -42,13 +66,13 @@ def read_value_with_type(input_value, type_str):
         <class 'str'>     "hello"
     '''
     match type_str:
-        case "<class 'bool'>"
+        case "<class 'bool'>":
             value = bool(input_value)
-        case "<class 'int'>"
+        case "<class 'int'>":
             value = int(input_value)
-        case "<class 'float'>"
+        case "<class 'float'>":
             value = float(input_value)
-        case "<class 'str'>"
+        case "<class 'str'>":
             value = str(input_value)
     return value
 
@@ -244,7 +268,6 @@ def uniq_filename(prefix=None, suffix=None, ext=None,
         file_abspath = os.path.join(check_dirname, filename+'_'+str(i))
     filename += str(i) # found!
     return filename
-
 
 
 

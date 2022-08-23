@@ -63,12 +63,12 @@ def imfit_parameters_list_of(modelName):
 #========================================================
 
 
-def isfloat(input):
-    ''' Returns True if the input string
+def isfloat(input_string):
+    ''' Returns True if the input_string string
         can be interpreted as a float number and returns False otherwise 
     '''
     try:
-        float(input)
+        float(input_string)
     except ValueError:
         return False
     else:
@@ -344,8 +344,8 @@ def extract_coords_from_block(models_block):
                 raise ValueError(f"Different X0 or Y0 data"
                                  f" in the block: \n {models_block}")
             elif len(all_coord_values) == 1:
-                value = all_coord_values[0]
-                result_dict[key] = value
+                value = list(all_coord_values)[0]
+                result_dict[coord_key] = value
             #
     return result_dict
 
@@ -371,13 +371,14 @@ def write_config_file(config_filename, input_models_list, input_comment=None):
     for current_block in input_models_list:
         coords_dict = extract_coords_from_block(current_block)
         for parameter in ['X0', 'Y0']:
-            coord_line = str_parameter_line(
-                            name=parameter, value=coords_dict[parameter],
-                            limits=coords_dict.get('limits_'+parameter),
-                            error=coords_dict.get('err_'+parameter),
-                            comment=coords_dict.get('comment_'+parameter)
-                            )
-            file_content_lines.append(coord_line)
+            if parameter in coords_dict.keys():
+                coord_line = str_parameter_line(
+                                name=parameter, value=coords_dict[parameter],
+                                limits=coords_dict.get('limits_'+parameter),
+                                error=coords_dict.get('err_'+parameter),
+                                comment=coords_dict.get('comment_'+parameter)
+                                )
+                file_content_lines.append(coord_line)
         #
         for current_model in current_block:
             modelName = current_model['modelName']

@@ -1,11 +1,7 @@
 
-# ----------- Class IMFITMODEL -----------------
-
 import imfit_module
 
 import numpy as np
-
-from astropy.io import fits
 
 
 #-----------------------------------------------
@@ -14,12 +10,12 @@ from astropy.io import fits
 config_examples_file = 'config_examples.dat'
 
 
-def isfloat(input):
-    ''' Returns True if the input string
+def isfloat(input_string):
+    ''' Returns True if the input_string string
         can be interpreted as a float number and returns False otherwise 
     '''
     try:
-        float(input)
+        float(input_string)
     except ValueError:
         return False
     else:
@@ -111,13 +107,16 @@ class ImfitParameter(object):
         #
         return cls(**parameter_dict)
 
+    @classmethod
+    def zero(cls, parameterName):
+        ''' Input: imfit parameter name
+            Return: ImfitParameter class object with
+            value = 0.0 and no limits, error or comment
+        '''
+        return cls(name=parameterName, value=0.0)
 
     @classmethod
     def zero_fixed(cls, parameterName):
-        ''' Input: imfit parameter name
-            Return: ImfitParameter class object with
-            value = 0.0, limits = 'fixed'
-        '''
         return cls(name=parameterName, value=0.0, limits='fixed')
 
 
@@ -387,18 +386,6 @@ class ImfitParameter(object):
             }
         return extended_parameter_dict
 
-    @property
-    def as_init_command(self):
-        parameters_dict = self.as_dict
-        name_value_pairs = [f"{name}={value}"
-                            for name, value in parameters_dict.items()]
-        parameters_part = ', '.join(name_value_pairs)
-        output_str = f"{self.__class__}({parameters_part})"
-        return output_str
-
-
-
-
 
 
 #-----------------------------------------------
@@ -411,9 +398,12 @@ class ImfitParameter(object):
 class ImfitModel(object):
     ''' The full imfit model (one 2D-function)
         object with model name and parameters
+        It contains X0 and Y0 parameters as separated ones
+        and model parameters (as ImfitParameter objects)
+        which are setted by the modelName ('Gauss', 'Exponential', ..)
     '''
-    X0 = None # as ImfitParameter
-    Y0 = None # as ImfitParameter
+    X0 = None # as ImfitParameter or None
+    Y0 = None # as ImfitParameter or None
     modelName = None
     model_parameters_list = None # only model, not X0, Y0
     
@@ -433,11 +423,11 @@ class ImfitModel(object):
         if 'X0' in kwargs.keys():
             coord_dict = {key: value for key, value in kwargs.items()
                           if 'X0' in key}
-            self.X0 = ImfitParameter(coord_dict)
+            self.X0 = ImfitParameter(**coord_dict)
         if 'Y0' in kwargs.keys():
             coord_dict = {key: value for key, value in kwargs.items()
                           if 'Y0' in key}
-            self.Y0 = ImfitParameter(coord_dict)
+            self.Y0 = ImfitParameter(**coord_dict)
         if self.X0 is None and self.Y0 is not None:
             print('Warning: ImfitModel got X0 but no Y0')
         if self.Y0 is None and self.X0 is not None:
@@ -501,15 +491,17 @@ class ImfitModel(object):
         return cls(**model_dict)
 
 
-    def write_to_file(self, filename=None):
-        models_list = [(self.as_dict,),]
-        imfit_module.write_config_file(filename, models_list)
-
     @property
     def parameters_list(self):
         ''' list of model parameters and X0, Y0 '''
         parameters_list_and_X0Y0 = ['X0', 'Y0'] + self.model_parameters_list
         return parameters_list_and_X0Y0
+
+
+    def write_to_file(self, filename=None):
+        models_list = [(self.as_dict,),]
+        imfit_module.write_config_file(filename, models_list)
+
 
     @property
     def x0(self):
@@ -524,6 +516,10 @@ class ImfitModel(object):
             return None
         else:
             return self.Y0.value
+
+    @property
+    def x0y0(self):
+        return (self.x0, self.y0)
 
 
     def makeimage(self, output='modelimage.fits', verbosity=False, **kwargs):
@@ -614,10 +610,7 @@ class ImfitModel(object):
     @property
     def model_parameters(self):
         ''' Return a parameters_list without 'X0' and 'Y0' '''
-        parameters_list = self.parameters_list.copy()
-        parameters_list.remove('X0')
-        parameters_list.remove('Y0')
-        return parameters_list
+        return self.model_parameters_list
 
     # - - - - - - - - - - - - - - - - - - - - - - -
     #  different types of presenting an ImfitModel object
@@ -625,7 +618,7 @@ class ImfitModel(object):
     @property
     def short_model_notation(self):
         modelName = self.modelName
-        parameters = ','.join(self.model_parameters)
+        parameters = ','.join(self.model_parameters_list)
         return f"{modelName}({parameters})"
 
     @property
@@ -638,7 +631,7 @@ class ImfitModel(object):
     def model_notation(self):
         modelName = self.modelName
         parameters_strings_list = []
-        for name in self.model_parameters:
+        for name in self.model_parameters_list:
             imfitParameter = getattr(self, name)
             value = imfitParameter.value
             fix = 'F' if imfitParameter.is_fixed else ''
@@ -657,9 +650,10 @@ class ImfitModel(object):
         model_dict = {}
         model_dict['modelName'] = self.modelName
         for parameterName in self.parameters_list:
-            parameter_attr = getattr(self, parameterName)
-            extended_parameter_dict = parameter_attr.as_extended_dict
-            model_dict.update(extended_parameter_dict)
+            imfitParameter = getattr(self, parameterName)
+            if imfitParameter is not None:
+                extended_parameter_dict = imfitParameter.as_extended_dict
+                model_dict.update(extended_parameter_dict)
         #
         return model_dict
 
@@ -724,8 +718,8 @@ class ImfitModelBlock(object):
         which have the same (common) X0 and Y0 coordinates
     '''
     models_tuple = None # as tuple of ImfitModel objects
-    X0 = None # as ImfitParameter
-    Y0 = None # as ImfitParameter
+    _X0 = ImfitParameter.zero('X0') # as ImfitParameter with...
+    _Y0 = ImfitParameter.zero('Y0') # ...value=0.0 — as default
 
     def __init__(self, *args):
         ''' Input: ImfitModel class objects (= args)
@@ -749,12 +743,16 @@ class ImfitModelBlock(object):
         coords_dict = imfit_module.extract_coords_from_block(models_dicts)
         #
         self.models_tuple = models_block
-        self.X0 = ImfitParameter({key: value 
-                                  for key, value in coords_dict.items()
-                                  if 'X0' in key})
-        self.Y0 = ImfitParameter({key: value 
-                                  for key, value in coords_dict.items()
-                                  if 'Y0' in key})
+        X0_dict = {key: value 
+                   for key, value in coords_dict.items()
+                   if 'X0' in key}
+        Y0_dict = {key: value 
+                   for key, value in coords_dict.items()
+                   if 'Y0' in key}
+        if len(X0_dict) > 0:
+            self._X0 = ImfitParameter(**X0_dict)
+        if len(Y0_dict) > 0:
+            self._Y0 = ImfitParameter(**Y0_dict)
 
 
     @classmethod
@@ -775,13 +773,73 @@ class ImfitModelBlock(object):
     def fromfile(cls, input_file):
         # read the first block from the input_file (may be just text)
         models_list = imfit_module.read_config(input_file)
-        first_block = models_list[0] # if many
+        first_block = models_list[0]
         models_block = first_block
         if len(models_list) > 1:
-            print('Warning: ImfitModelBlock read from file'
+            print('Warning: ImfitModelBlock is given from file'
                   ' with multiple blocks')
         return cls(*models_block)
 
+    # - - - - - - - - - - - - - - - - - - - - - -
+
+    @property
+    def X0(self):
+        return self._X0
+
+    @X0.setter
+    def X0(self, input_X0):
+        if isinstance(input_X0, ImfitParameter):
+            X0_parameter = input_X0
+        elif isinstance(input_X0, int) or isinstance(input_X0, float):
+            X0_parameter = ImfitParameter(name='X0', value=input_X0)
+        elif isinstance(input_X0, dict):
+            X0_parameter = ImfitParameter.from_dict(input_X0)
+        elif isinstance(input_X0, str):
+            X0_parameter = ImfitParameter.fromtext(input_X0)
+        else:
+            raise ValueError(f"Input {input_X0} for setting X0"
+                             f" is not correct")
+        self._X0 = X0_parameter
+        for model in self.models_tuple:
+            model.X0 = X0_parameter
+
+    @X0.deleter
+    def X0(self):
+        zero_X0_parameter = ImfitParameter.zero('X0')
+        self._X0 = zero_X0_parameter
+        for model in self.models_tuple:
+            model.X0 = zero_X0_parameter
+
+
+    @property
+    def Y0(self):
+        return self._Y0
+
+    @Y0.setter
+    def Y0(self, input_Y0):
+        if isinstance(input_Y0, ImfitParameter):
+            Y0_parameter = input_Y0
+        elif isinstance(input_Y0, int) or isinstance(input_Y0, float):
+            Y0_parameter = ImfitParameter(name='Y0', value=input_Y0)
+        elif isinstance(input_Y0, dict):
+            Y0_parameter = ImfitParameter.from_dict(input_Y0)
+        elif isinstance(input_Y0, str):
+            Y0_parameter = ImfitParameter.fromtext(input_Y0)
+        else:
+            raise ValueError(f"Input {input_Y0} for setting Y0"
+                             f" is not correct")
+        self._Y0 = Y0_parameter
+        for model in self.models_tuple:
+            model.Y0 = Y0_parameter
+
+    @Y0.deleter
+    def Y0(self):
+        zero_Y0_parameter = ImfitParameter.zero('Y0')
+        self._Y0 = zero_Y0_parameter
+        for model in self.models_tuple:
+            model.Y0 = zero_Y0_parameter
+
+    # - - - - - - - - - - - - - - - - - - - - - -
 
     def write_to_file(self, filename):
         models_list = [self.as_tuple_of_dicts,]
@@ -811,7 +869,8 @@ class ImfitModelBlock(object):
 
     def __str__(self):
         coords_str = f"{self.x0}, {self.y0}"
-        models_notes = [model.short_model_notation for model in self.models_tuple]
+        models_notes = [model.short_model_notation
+                        for model in self.models_tuple]
         models_str = ' '.join(models_notes)
         return f"{coords_str} {models_str}"
 
@@ -824,36 +883,34 @@ class ImfitModelBlock(object):
 
     @property
     def coords_dict(self):
-        models_dicts = tuple([model.as_dict for model in self.models_tuple])
-        output_dict = imfit_module.extract_coords_from_block(models_dicts)
+        output_dict = {}
+        output_dict.update(self.X0.as_extended_dict)
+        output_dict.update(self.Y0.as_extended_dict)
         return output_dict
 
     @property
-    def models(self):
-        modelNames_list = []
-        for model in self.list:
-            modelNames_list.append(model.modelName)
-        return tuple(modelNames_list)
+    def modelNames_list(self):
+        return [model.modelName for model in self.models_tuple]
 
     @property
-    def X0(self):
-        return self.
+    def X0_dict(self):
+        return self.X0.as_extended_dict
 
     @property
-    def Y0(self):
-        return (self.coords_dict['Y0'])
+    def Y0_dict(self):
+        return self.Y0.as_extended_dict
 
     @property
     def x0(self):
-        return self.coords_dict['X0']
+        return self.X0.value
 
     @property
     def y0(self):
-        return self.coords_dict['Y0']
+        return self.Y0.value
 
     @property
     def x0y0(self):
-        return (self.coords_dict['X0'], self.coords_dict['Y0'])
+        return (self.x0, self.y0)
 
     @property
     def tuple(self):
@@ -880,6 +937,12 @@ class ImfitModelBlock(object):
 
     def __copy__(self):
         list_of_models = [model.copy() for model in self.models_tuple]
+        X0 = self.X0.copy()
+        Y0 = self.Y0.copy()
+        for model in list_of_models:
+            model.X0 = X0
+            model.Y0 = Y0
+        #
         return self.__class__(*list_of_models)
 
     def copy(self):
@@ -890,9 +953,7 @@ class ImfitModelBlock(object):
 
     @property
     def as_file_text(self):
-        models_dicts_list = [model.as_dict for model in self.models_tuple]
-        model_block = tuple(models_dicts_list)
-        models_list = [model_block,]
+        models_list = [self.as_tuple_of_dicts,]
         file_text = imfit_module.write_config_file(None, models_list)
         return file_text
 
@@ -906,7 +967,8 @@ class ImfitModelBlock(object):
     @property
     def short_notation(self):
         coords_str = f"{self.x0}, {self.y0}"
-        models_notes = [model.short_model_notation for model in self.models_tuple]
+        models_notes = [model.short_model_notation
+                        for model in self.models_tuple]
         models_str = '\n'.join(models_notes)
         return f"{coords_str}\n{models_str}"
 
@@ -923,20 +985,31 @@ class ImfitModelBlock(object):
         return tuple(models_block_list)
 
     @property
-    def as_models_tuple(self):
-        return self.as_tuple_of_dicts
+    def first_model(self):
+        return self.models_tuple[0]
 
     @property
     def as_simple(self):
-        return self.as_models_tuple
+        return self.as_tuple_of_dicts
+
+    @property
+    def as_ImfitModel(self):
+        if self.size == 1:
+            return self.models_tuple[0]
+        else:
+            raise ValueError("The block has multiple ImfitModel-s")
+
+    @property
+    def as_ImfitModelCombination(self):
+        return ImfitModelCombination([self,])
 
     @property
     def as_combination(self):
-        return [self,]
+        return self.as_ImfitModelCombination
 
     @property
     def as_models_list(self):
-        return [(self.as_dict,),]
+        return [self.as_tuple_of_dicts,]
 
 
 
@@ -976,7 +1049,7 @@ class ImfitModelCombination(object):
                 arg = ImfitModelBlock(arg)
             models_list.append(arg)
         #
-        self.blocks = models_list
+        self.blocks_list = models_list
 
 
     @classmethod
@@ -993,7 +1066,7 @@ class ImfitModelCombination(object):
 
 
     def write_to_file(self, filename):
-        models_list = self.blocks
+        models_list = self.blocks_list
         imfit_module.write_config_file(filename, models_list)
 
 
@@ -1002,9 +1075,11 @@ class ImfitModelCombination(object):
         if (attrs.get('refimage') is None and
             (attrs.get('nrows') is None or attrs.get('ncols') is None)):
             # refimage is None; assuming X0 and Y0 as a center of image
-            x0y0_list = [block.x0y0 for block in self.blocks]
-            ncols = max([x0y0[0] for x0y0 in x0y0_list])
-            nrows = max([x0y0[1] for x0y0 in x0y0_list])
+            x0y0_list = [block.x0y0 for block in self.blocks_list]
+            ncols = max([x0y0[0] for x0y0 in x0y0_list]) * 2
+            nrows = max([x0y0[1] for x0y0 in x0y0_list]) * 2
+            ncols = int(ncols)
+            nrows = int(nrows)
             attrs['nrows'] = nrows
             attrs['ncols'] = ncols
         #
@@ -1020,30 +1095,25 @@ class ImfitModelCombination(object):
     # - - - - - - - - - - - - - - - - - - - - - - -
 
     def __str__(self):
-        modelNames_in_models_list = []
-        for models_block in models_list:
+        modelNames_in_blocks_list = []
+        for models_block in self.blocks_list:
             modelNames_in_models_block = []
-            for ImfitModel in models_block:
-                modelName = ImfitModel.modelName
+            for imfitModel in models_block:
+                modelName = imfitModel.modelName
                 modelNames_in_models_block.append(modelName)
             #
             tuple_names = tuple(modelNames_in_models_block)
-            modelNames_in_models_list.append(tuple_names)
+            modelNames_in_blocks_list.append(tuple_names)
         #
         output_str = ''
-        for tuple_names in modelNames_in_models_list:
-            if len(tuple_names) == 1:
-                modelName = tuple_names[0]
-                output_str += f" {modelName}"
-            else:
-                modelNames_str = ' '.join(list(tuple_names))
-                output_str += f" ({modelNames_str})"
+        for tuple_names in modelNames_in_blocks_list:
+            output_str += f" ({','.join(tuple_names)})"
         #
         return output_str
 
     def __repr__(self):
         output_lines = []
-        for models_block in self.blocks:
+        for models_block in self.blocks_list:
             output_lines.append(models_block.notation)
         output_str = '\n'.join(output_lines)
         return output_str
@@ -1053,7 +1123,7 @@ class ImfitModelCombination(object):
     #  ImfitModelComb copy: based on copy method of dict objects
 
     def __copy__(self):
-        list_of_blocks = [block.copy() for block in self.blocks]
+        list_of_blocks = [block.copy() for block in self.blocks_list]
         return self.__class__(*list_of_blocks)
 
     def copy(self):
@@ -1063,15 +1133,30 @@ class ImfitModelCombination(object):
 
     @property
     def shape(self):
-        return tuple([models_block.size for models_block in self.blocks])
+        return tuple([block.size for block in self.blocks_list])
 
     @property
-    def models(self):
-        return tuple([models_block.models for models_block in self.blocks])
+    def blocks_number(self):
+        return len(self.blocks_list)
+
+    @property
+    def models_number(self):
+        return sum(self.shape)
+
+    @property
+    def size(self):
+        return self.models_number
+
+    @property
+    def modelNames_list(self):
+        output_list = []
+        for block in self.blocks_list:
+            output_list.extend(block.modelNames_list)
+        return output_list
 
     @property
     def as_file_text(self):
-        models_list = [block.tuple for block in self.blocks]
+        models_list = [block.as_tuple_of_dicts for block in self.blocks_list]
         file_text = imfit_module.write_config_file(None, models_list)
         return file_text
 
@@ -1085,18 +1170,22 @@ class ImfitModelCombination(object):
     @property
     def notation(self):
         output_lines = []
-        for models_block in self.blocks:
+        for models_block in self.blocks_list:
             output_lines.append(models_block.short_notation)
         output_str = '\n'.join(output_lines)
         return output_str
 
     @property
     def list(self):
-        return self.blocks
+        return self.blocks_list
+
+    @property
+    def blocks(self):
+        return self.blocks_list
 
     @property
     def as_list_of_tuples_of_dicts(self):
-        blocks_list = [block.as_tuple_of_dicts for block in self.blocks]
+        return [block.as_tuple_of_dicts for block in self.blocks_list]
 
     @property
     def as_models_list(self):
@@ -1107,10 +1196,12 @@ class ImfitModelCombination(object):
         return self.as_list_of_tuples_of_dicts
 
     @property
+    def first_block(self):
+        return self.blocks_list[0]
+
+    @property
     def first_model(self):
-        block = self.blocks[0]
-        model = block.tuple[0]
-        return model
+        return self.first_block.first_model
 
     @property
     def main_model(self):
@@ -1120,14 +1211,19 @@ class ImfitModelCombination(object):
     def main(self):
         return self.main_model
 
+    @property
+    def as_ImfitModel(self):
+        if self.size == 1:
+            return self.first_model
+        else:
+            raise ValueError("The combination has multiple Models")
 
-
-
-
-
-
-
-
+    @property
+    def as_ImfitModelBlock(self):
+        if self.blocks_number == 1:
+            return self.first_block
+        else:
+            raise ValueError("The combination has multiple Blocks")
 
 
 

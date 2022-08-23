@@ -1,5 +1,5 @@
 
-# ----------- Class Galaxy -----------------
+# ----------- Class AstroImage -----------------
 
 import imfit_model
 import imfit_module
@@ -9,6 +9,8 @@ import fits2image
 
 import numpy as np
 from astropy.io import fits
+
+import json
 
 from datetime import datetime
 import tempfile
@@ -20,13 +22,12 @@ import subprocess
 
 #-----------------------------------------------
 
-
-def isfloat(input):
-    ''' Returns True if the input string
+def isfloat(input_string):
+    ''' Returns True if the input_string string
         can be interpreted as a float number and returns False otherwise 
     '''
     try:
-        float(input)
+        float(input_string)
     except ValueError:
         return False
     else:
@@ -34,109 +35,47 @@ def isfloat(input):
 
 
 
+
 #-----------------------------------------------
 
-
-
-
-class GalaxyImage(object):
-    ''' One galaxy may have multiple images
-    This class is exactly for a single image:
-    it has size/shape, pixelscale, X, Y, PA, ra, dec of the center,
-    pixnumber, HISTORY, COMMENT (as lines of the FITS file header)
-    
-    and methods:
-    to jpg(), setNaNs(float_value),
-    replace(condition/maskedBOOLEAN_array, new_value, tmp=False) — 
-    — replaces the GalaxyImage.data or returns the new_array if tmp is True
-    with replaced values
-    #
-    it would also have images...
-    images should be fits hdul files with its own properties
-    [...]_image = hdul[0].copy() /// 
-    /// but may have method update (image) on the hard drive
-    mask_image (mask image array)
-    property masked_image(mask_value=np.nan)
-    error_image
-    psf image
-    regions_list — list where each item is region in DS9
-    regions_groups — dict where each item is named regions list
-    #
-    ds9_load_dict — a dict with recommended ds9 options:
-    scale=log, scale limits = ..., contours = True and others
-    ds9_load_string - a string of ds9_load_dict
-    #
-    properties :
-    (ra, dec) of left bottom corner (pixel center or pixel border??)
-    #
-    #
-    #
-    NECESSARY TO KNOW:
-    - how to work with ds9 in Python here
-    - how to work with WCS data in Python here
-    - how to work with adu/electron data, exposure
-    - how to read and change special info from FITS header
-    - how to work with "units" library
-    --- IT WILL CHANGE THE WORL.. THE GALAXY! --- 
-    '''
-
-
-'''
-    Also needed:
-    #
-    AstroImage class
-        - with WCS and options like subtract_sky, correct_flat())
-        - and with option like create_profile (png)
-    BackgroundImage class
-    ErrorImage class
-    ObjectImage class — ?
-    ContoursImage class (saving contours in any way)
-    MaskImage class
-    Creating masks from DS9 regions of any form
-        or manually (set pixels True/False)
-    ModelGalaxyImage class
-    MultipleExtensions images
-
-'''
 
 
 #-----------------------------------------------
 #           * ^ * ^ * ^ * ^ * ^ * ^ *
-# ----------- Class Galaxy -------------
+# -------------- Class FitsImage ---------------
 #-----------------------------------------------
 
 
-class GalaxyImage(object):
-    ''' A class which describes galaxy fits-image
+class FitsImage(object):
+    ''' A class which describes fits-image
         based on an existing fits file or specified by numpy 2d-array
     '''
     # default:
-    _wavelength = None # the wavelength of the passband in nm (may change)
-    _wavelength_unit = 'nm' # nm, micron, cm, m and etc. nm — as default
-    _passbandName = None # the passband name of the passband for certain image
-    #
     _filename = None # name of fits file used
     _tmp_filename = None # a temporary file for FITS, deleting after work
     _abspath = None # fits file name with full abs path location
     _dirname = None # directory which contains fits file
-    _galaxy_name = None # name of the Galaxy (optional)
     _data = None # numpy array of pixel values, could be 3-dimension
     _header = None # header of fits file
     #
     _pixelscale = None # pixelscale in arcsec/pixel or another scale
     _pixelscale_unit = None
     #
+    _wavelength = None # the wavelength of the passband in nm (may change)
+    _wavelength_unit = 'nm' # nm, micron, cm, m and etc. nm — as default
+    _passbandName = None # the passband name of the passband for certain image    
+    #
     _ra = None # right ascension of the image center
     _dec = None # declination of the image center
     #
-    model = None # ImfitModelCombination object — known imfit model
-    model_filename = None # where to write self.model.as_file_text
+    _pixel_unit = None # e/sec, adu and anything else
+    _exposure = None # always in seconds
     #
     comment = None # if needed
     history = None # manually written history of the GalaxyImage (1 line text)
 
 
-    def __init__(self, input_image):
+    def __init__(self, input_image, **kwargs):
         ''' Input: filename or numpy.ndarray or hdu object'''
         if isinstance(input_image, str):
             # it's a name of fits file
@@ -157,9 +96,11 @@ class GalaxyImage(object):
         else:
             raise ValueError('Unknown type of input')
         #
-        self._data = hdul[0].data.copy()
+        self._data = np.array(hdul[0].data)
         self._header = hdul[0].header.copy()
         hdul.close()
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 
     @classmethod
@@ -168,31 +109,87 @@ class GalaxyImage(object):
 
 
     @classmethod
-    def from_file(cls, filename):
-        return cls(filename)
+    def from_file(cls, filename, **kwargs):
+        return cls(filename, **kwargs)
 
-
+    @classmethod
+    def from_json(cls, json_filename):
+        with open(json_filename) as file:
+            json_dict = json.load(file)
+        _abspath = json_dict.get('_abspath')
+        _filename = json_dict.get('_filename')
+        if _abspath is not None:
+            return cls.from_file(_abspath, **json_dict)
+        elif _filename is not None:
+            return cls.from_file(_filename, **json_dict)
+        else:
+            raise ValueError("No abspath/filename is presented in json")
 
 
     def __str__(self):
-        return self.filename
+        return f"{self.__class__.__name__} {self.filename}"
         
     
     def __repr__(self):
-        output_str = 'GalaxyImage'
+        output_str = self.__class__.__name__
         interesting_params = [
-            self.filename, self.galaxy_name, 
-            self.shape, self.wavelength_nm,
-            self.ra, self.dec, self.pixelscale]
+            self.filename, self.shape, self.ra, self.dec,
+            self.pixelscale, self.pixelscale_unit]
         for item in interesting_params:
             if item is not None:
                 output_str += ', ' + str(item)
         return output_str
 
+    def __copy__(self):
+        data = self.data.copy()
+        kwargs_dict = self.__dict__.copy()
+        for key in ['_filename', '_abspath', '_dirname']:
+            popped = kwargs_dict.pop(key, d=None)
+        return self.__class__(data, **kwargs_dict)
+
+    def copy(self):
+        return self.__copy__()
+
+
+
+    def convert_to(self, input_type):
+        ''' Converts data array to the specified type
+            (int, float (=np.float64), np.float32)
+        '''
+        if isinstance(input_type, str):
+            input_type_str = input_type
+        else:
+            input_type_str = str(input_type.dtype)
+        #
+        if input_type_str in ['float', 'np.float64',
+                              'numpy.float64', 'float64']:
+            input_type = np.float64
+            bitpix = -64
+        elif input_type_str in ['np.float32', 'numpy.float32', 'float32']:
+            input_type = np.float32
+            bitpix = -32
+        elif input_type_str in ['int', 'integer', 'np.int','numpy.int',
+                                'np.int64', 'numpy.int64', 'int64']:
+            input_type = np.int64
+            bitpix = 64
+        elif input_type_str in ['np.int32', 'numpy.int32', 'int32']:
+            input_type = np.int32
+            bitpix = 32
+        elif input_type_str in ['np.int16', 'numpy.int16', 'int16']:
+            input_type = np.int16
+            bitpix = 16
+        elif input_type_str in ['np.uint8', 'numpy.uint8', 'uint8']:
+            input_type = np.uint8
+            bitpix = 8
+        else:
+            raise ValueError("input type (string) is unknown")
+        #
+        old_data = self.data
+        self.data = np.array(old_data, dtype=input_type)
+        self.header['BITPIX'] = bitpix
+
 
     # - - - - - - - - - - - - - - - - - - - - - - -
-    #      if new data or filename specified
-    #      — change everything
 
     @property
     def data(self):
@@ -585,6 +582,7 @@ class GalaxyImage(object):
 
     @property
     def ra(self):
+        ''' RA of the image center'''
         return self._ra
 
     @ra.setter
@@ -601,6 +599,7 @@ class GalaxyImage(object):
 
     @property
     def dec(self):
+        ''' DEC of the image center'''
         return self._dec
 
     @dec.setter
@@ -613,6 +612,39 @@ class GalaxyImage(object):
     @dec.deleter
     def dec(self):
         self._dec = None
+
+
+    @property
+    def pixel_unit(self):
+        return self._pixel_unit
+
+    @pixel_unit.setter
+    def pixel_unit(self, input_pixel_unit):
+        if input_pixel_unit is not None:
+            self._pixel_unit = str(input_pixel_unit)
+        else:
+            self._pixel_unit = None
+
+    @pixel_unit.deleter
+    def pixel_unit(self):
+        self._pixel_unit = None
+
+
+    @property
+    def exposure(self):
+        return self._exposure
+
+    @exposure.setter
+    def exposure(self, input_exposure):
+        if isfloat(input_exposure):
+            self._exposure = float(input_exposure)
+        else:
+            raise ValueError('Input exposure is NaN')
+
+    @exposure.deleter
+    def exposure(self):
+        self._exposure = None
+
 
     # - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -668,37 +700,15 @@ class GalaxyImage(object):
             shape_in_arcsec = (yN * scale, xN * scale)
             return shape_in_arcsec
 
+
     @property
     def as_dict(self):
-        D = {}
-        attrs_list = [
-            'wavelength', 'wavelength_unit', 'passbandName',
-            'filename', 'abspath', 'galaxy_name',
-            'pixelscale', 'pixelscale_unit', 'ra', 'dec',
-            'comment', 'history']
-        for attribute in attrs_list:
-            attr_value = getattr(self, attribute)
-            if attr_value is not None:
-                D[attribute] = attr_value
-        model = self.model
-        model_filename = self.model_filename
-        if model is not None:
-            if model_filename is not None:
-                D['model_filename'] = model_filename
-            D['model'] = model.as_dicts
-
-        if model is not None:
-            D['model'] = True
-            model_text = model.as_file_text
-            if model_filename is not None:
-                D['model_filename'] = model_filename
-            else:
-                model_filename = general_functions.uniq_filename(
-                                    prefix='galModel_', ext='.dat',
-                                    check_dirname=os.getcwd())
-            with open(model_filename, 'w') as file:
-                file.write(model_text)
-        return D
+        output_dict = {}
+        for key, value in self.__dict__.items():
+            if (isinstance(key, str | int | float)
+                and general_functions.is_python_simple_type(value)):
+                output_dict[key] = value
+        return output_dict
 
 
     def get_dict_from_attrs(self, *args):
@@ -713,108 +723,42 @@ class GalaxyImage(object):
 
 
     @property
-    def as_file_text(self):
-        lines = []
-        data_dict = self.as_dict
-        attrs_list = data_dict.keys()
-        model
-        for attr in attrs_list:
+    def as_json(self):
+        dictionary = self.as_dict
+        json_text = json.dumps(dictionary, indent=4)
+        return json_text
 
-
-
-        if model is not None:
-            D['model'] = True
-            model_text = model.as_file_text
-            if model_filename is not None:
-                D['model_filename'] = model_filename
-            else:
-                model_filename = general_functions.uniq_filename(
-                                    prefix='galModel_', ext='.dat',
-                                    check_dirname=os.getcwd())
-            with open(model_filename, 'w') as file:
-                file.write(model_text)
-
-
-
-
-
+    def save_json(self, filename):
+        with open(filename, "w") as outfile:
+            outfile.write(self.as_json)
 
 
 
 
 #-----------------------------------------------
 #           * ^ * ^ * ^ * ^ * ^ * ^ *
-# ----------- Class Galaxy -------------
+# -------------- Class MaskImage ---------------
 #-----------------------------------------------
 
 
-class Galaxy(object):
-    ''' A class for saving a lot of information about single galaxy
-        and connected to ImfitModel class
-        Input: a dict with parameters 
-            or named function arguments with their values
-        Example:     Galaxy({'name': 'M31', 'ID': 224})
-        Example (2): Galaxy(name='NGC224', fits_name='galaxy.fits')
+
+class MaskImage(object):
+    ''' Mask for astronomical image, True and False values in each pixel
     '''
-    # Default:
-    name = None # galaxy name
-    ID = None # galaxy unique identificator
-    number = None # local galaxy unique identificator
-    id_list = [] # list of different galaxy IDs
-    ra = None
-    dec = None
-    commonDir = None # main directory where the galaxy files are keeping
-    fits_name = None # name of galaxy fits file
-    fits = None # astropy fits object
-    data = None # galaxy image array
-    wavelength = None # the wavelength of the passband for certain image
-    passbandName = None # the passband name of the passband for certain image
-    distance = None # distance to the galaxy in parsec
-    velocity = None
-    redshift = None
-    size_arcsec = None
-    size_parsec = None
-    imfit_config_name = None
-    imfit_bestfit_name = None
-    imfitModel = None # ImfitModelCombination object
+    _array = None # numpy array of the mask
+    _false_value = False # values which the False pixels will be filled
+    _true_value = True # values which the False pixels will be filled
+    _filename = None
     #
-    #--------------------------------------------
-    #
-    def __init__(self, *args, **kwargs):
-        main_dict = {}
-        if len(kwargs) > 0:
-            main_dict.update(kwargs)
-        if len(args) == 1 and isinstance(args[0],dict):
-            input_dict = args[0]
-            main_dict.update(input_dict)
-        else:
-            raise ValueError("Galaxy.__init__ takes only a dict"
-                             "or named parameters/variables")
-        #
-        for key, value in main_dict.items():
-            setattr(self, key, value)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    def __init__(self, input_mask):
+        ''' Input: numpy array or filename'''
+        if isinstance(input_mask, np.ndarray):
+            self._array = input_mask
+        elif isinstance(input_mask, str):
+            # it's a filename
+            hdul = fits.open(input_mask)
+            data = hdul[0].data
+            self._array = data.copy()
+            hdul.close()
+        
 
