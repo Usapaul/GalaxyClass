@@ -58,19 +58,6 @@ class Point2D(tuple):
         y = r * np.sin(np.radians(phi))
         return cls(x, y)
 
-    @classmethod
-    def rotated(cls, x, y, PA):
-        ''' Returns a Point2D object as (x,y) input point
-            but rotated to the angle PA
-            around the centre (point with x=0, y=0)
-        '''
-        PA %= 360
-        cosPA = np.cos(np.radians(PA))
-        sinPA = np.sin(np.radians(PA))
-        x_new = x * cosPA - y * sinPA
-        y_new = x * sinPA + y * cosPA
-        return cls(x_new, y_new)
-
     # - - - - - - - - - - - - - - - - - - - - - -
 
     @staticmethod
@@ -105,7 +92,7 @@ class Point2D(tuple):
         return f"Point2D ({self.x},{self.y})"
 
     def copy(self):
-        return self.__new__(self.x, self.y)
+        return self.__class__(self.x, self.y)
 
     # - - - - - - - - - - - - - - - - - - - - - -
 
@@ -172,12 +159,23 @@ class Point2D(tuple):
         return self._PA
 
     @property
-    def phi(self):
-        return self._PA
-
-    @property
     def xy(self):
         return (self.x, self.y)
+    
+    def rotated(self, PA):
+        ''' Returns a Point2D object as (x,y) input point
+            but rotated to the angle PA
+            around the centre (point with x=0, y=0)
+        '''
+        PA %= 360
+        x = self.x
+        y = self.y
+        cosPA = np.cos(np.radians(PA))
+        sinPA = np.sin(np.radians(PA))
+        x_new = x * cosPA - y * sinPA
+        y_new = x * sinPA + y * cosPA
+        return self.__class__(x_new, y_new)
+
 
 
 
@@ -314,7 +312,7 @@ class LineSegment:
         instance = super(LineSegment, cls).__new__(cls)
         return instance
 
-    def __init__(self, point1, point2):
+    def __init__(self, point1, point2=(0,0)):
         x1, y1 = point1
         x2, y2 = point2
         self.point1 = Point2D(x1, y1)
@@ -326,6 +324,17 @@ class LineSegment:
         #
         linear_fun = LinearFunction2D.from_points(self.point1, self.point2)
         self.linear_function = linear_fun
+
+
+    def __str__(self):
+        return f"{self.point1!s}-{self.point2!s}"
+
+
+    def __repr__(self):
+        return f"LineSegment {self.__str__()}"
+
+    def copy(self):
+        return self.__new__(self.point1, self.point2)
 
     @property
     def x_max(self):
@@ -363,37 +372,12 @@ class LineSegment:
 
 
 
-
-
-class RadialVector2D(Point2D):
-    ''' A vector which starts from the point (0,0) '''
-    def __new__(cls, x, y):
-        ''' Point2D == tuple (x,y) '''
-        instance = super().__new__(cls, x, y)
-        return instance
-
-    def __str__(self):
-        return f"({self.x},{self.y})"
-
-    def __repr__(self):
-        return f"RadialVector2D ({self.x},{self.y})"
-
-    def copy(self):
-        return self.__new__(self.x, self.y)
-
-    @property
-    def modulus(self):
-        return self.radial_distance
-
-    def rotate(self, angle):
-        self = cls(Point2D.rotated(self.x, self.y, angle))
-
-
-
-
-class Vector2D:
+class Vector2D(LineSegment):
     ''' Vector from point (x_start, y_start) to (x_end, y_end) '''
     #
+    def __new__(cls, x_end, y_end, x_start=0, y_start=0):
+        return super().__new__(cls, (x_start,y_start), (x_end,y_end))
+
     def __init__(self, x_end, y_end, x_start=0, y_start=0):
         if int(x_end) != x_end or int(y_end) != y_end:
             x_end = float(x_end)
@@ -404,10 +388,10 @@ class Vector2D:
         #
         self.x_start = x_start
         self.y_start = y_start
-        self._start_point = Point2D(x_start, y_start)
+        self._start_point = Point2D(self.x_start, self.y_start)
         self.x_end = x_end
         self.y_end = y_end
-        self._end_point = Point2D(x_end, y_end)
+        self._end_point = Point2D(self.x_end, self.y_end)
         #
         dx = x_end - x_start
         dy = y_end - y_start
@@ -415,9 +399,8 @@ class Vector2D:
         self.dy = dy
         #
         # PA from 0 to 360 degrees
-        vector_as_radial = RadialVector2D(dx, dy)
-        self._PA = vector_as_radial.PA
-        self._modulus = vector_as_radial.modulus
+        self._PA = Point2D.calc_argphi(dx, dy)
+        self._modulus = Point2D.calc_modulus(dx, dy)
 
 
     @classmethod
@@ -426,7 +409,8 @@ class Vector2D:
         return cls(x, y)
 
     @classmethod
-    def from_point(cls, point):
+    def radial(cls, point):
+        # start_point is (0,0)
         return cls(point.x, point.y)
 
     @classmethod
@@ -531,14 +515,16 @@ class Vector2D:
     def rotate(self, PA):
         ''' Rotates vector for the angle PA in degrees counter clockwise.
             Rotation around the start_point '''
-        x_end = self.x_end
-        y_end = self.y_end
+        dx = self.dx
+        dy = self.dy
         cosPA = np.cos(np.radians(PA))
         sinPA = np.sin(np.radians(PA))
-        x_end_new = x_end * cosPA - y_end * sinPA
-        y_end_new = x_end * sinPA + y_end * cosPA
+        dx_new = dx * cosPA - dy * sinPA
+        dy_new = dx * sinPA + dy * cosPA
         x_start = self.x_start
         y_start = self.y_start
+        x_end_new = self.x_start + dx_new
+        y_end_new = self.y_start + dy_new
         self.__init__(x_end_new, y_end_new, x_start, y_start)
 
     def rotate_around_00(self, PA):
@@ -555,28 +541,7 @@ class Vector2D:
         self.__init__(x_end_new, y_end_new, x_start_new, y_start_new)
 
     def linear_function(self, input_x=None):
-        if not hasattr(self, '_linear_fun_k'):
-            k = self.dy / self.dx
-            b = self.end_point.y - k * self.end_point.x
-            linear_fun = lambda x: k * x + b
-            setattr(self, '_linear_fun_k', linear_fun)
-        if input_x is None:
-            return self._linear_fun_k
-        else:
-            return self._linear_fun_k(input_x)
-
-    def polar_function(self, input_phi=None):
-        if not hasattr(self, '_linear_fun_k'):
-            k = self.dy / self.dx
-            b = self.end_point.y - k * self.end_point.x
-            linear_fun = lambda x: k * x + b
-            setattr(self, '_linear_fun_k', linear_fun)
-        if input_x is None:
-            return self._linear_fun_k
-        else:
-            return self._linear_fun_k(input_x)
-
-
+        return self.linear_function(input_x) # in superclass
 
 
 # ------------------------------------------------
@@ -768,10 +733,10 @@ class Rectangle(Shape2D):
         # lb, lu, ru and rb — left bottom, left upper,
         # right upper and right bottom correspondingly
         # points of the rectangle corners
-        lb = Point2D.rotated(-width/2, -height/2, PA)
-        lu = Point2D.rotated(-width/2, height/2, PA)
-        ru = Point2D.rotated(width/2, height/2, PA)
-        rb = Point2D.rotated(width/2, -height/2, PA)
+        lb = Point2D(-width/2, -height/2).rotated(PA)
+        lu = Point2D(-width/2, height/2).rotated(PA)
+        ru = Point2D(width/2, height/2).rotated(PA)
+        rb = Point2D(width/2, -height/2).rotated(PA)
         #
         k = np.tan(np.radians(PA))
         b = lambda x, y, k: y - k * x
@@ -1023,28 +988,33 @@ class Polygon(Shape2D):
         x_max = np.max(x_list)
         x_min = np.min(x_list)
         if x_min < 0:
-            raise ValueError("All points should have x coordinate > 0")
+            raise ValueError("All points should have X coordinate > 0")
         xMax = int(np.ceil(x_max))
         y_max = np.max(y_list)
         y_min = np.min(y_list)
         if y_min < 0:
-            raise ValueError("All points should have y coordinate > 0")
+            raise ValueError("All points should have Y coordinate > 0")
         yMax = int(np.ceil(y_max))
         array = super().__new__(cls, yMax, xMax)
         #
         # ---------------------- ???????????
         #
-        vectors_list = []
+        segments_list = []
         for i in range(N-1):
             current_point = points_list[i]
             next_point = point_list[i+1]
-            vector = Vector2D.from_points(current_point, next_point)
-            vectors_list.append(vector)
+            segment = LineSegment(current_point, next_point)
+            segments_list.append(segment)
         point_first = points_list[0]
         point_last = points_list[-1]
-        vector_last = Vector2D.from_points(point_last, point_first)
-        vectors_list.append(vector_first)
+        segment_last = LineSegment(point_last, point_first)
+        segments_list.append(segment_last)
         #
+        for x in range(xMax+1):
+            segments_in_column = dict(
+                filter(lambda s: s.x_min < x <= s.x_max,
+                       segments_list.items()))
+            
         # Create a dictionary of sector parameters of each vector
         # (sector — where the vector is — in polar coordinates ranges)
         sectors_dict = {}
