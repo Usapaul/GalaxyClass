@@ -1,0 +1,310 @@
+\documentclass[14pt, a4paper]{article}
+\usepackage[T1,T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[14pt]{extsizes} %add 14pt
+\linespread{1.6} % полуторный интервал
+\usepackage{setspace}
+\usepackage[english,russian]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{makeidx}
+\usepackage{tikz}
+\newcommand{\jump}{\ \newline \ \newline \ \newline \ \newline}
+\newcommand{\go}{\ \newline}
+
+
+%\pagestyle{empty}
+
+
+
+\begin{document}
+
+
+\section{Уравнение эллипса на плоскости XY, повернутого на угол $\alpha$}
+
+
+Формулы преобразования координат:
+
+$
+	x' = x \cos \alpha - y \sin \alpha,
+$
+
+$
+	y' = x \sin \alpha + y \cos \alpha.
+$
+
+\noindent
+Уравнение эллипса, связывающее координаты $y$ и $x$:
+
+\begin{equation}
+	\frac{x^2}{a^2} + \frac{y^2}{b^2} = 1.
+\end{equation}
+
+Используем это уравнение вместе с формулами преобразования координат, чтобы получить уравнение, связывающее координаты $(x,y)$ повернутого эллипса. Возьмем искомый повернутый эллипс с координатами $(x',y')$ и определим координаты прямого эллипса, в котором каждая точка $(x,y)$ соответствует точке $(x',y')$ до поворота. И запишем обратное преобразование, которое равносильно повороту наклоненного эллипса на угол $-\alpha$ (до прямого).
+
+\begin{equation}
+    x = x' \cos(-\alpha) - y' \sin(-\alpha) = x' \cos\alpha + y' \sin\alpha
+\end{equation}
+\begin{equation}
+    y = x' \sin(-\alpha) + y' \cos(-\alpha) = -x' \sin\alpha + y' \cos\alpha
+\end{equation}
+
+Для $x$ и $y$ в (2), (3) верно уравнение эллипса (1). Подставим в (1) правые части для $x$ и $y$ из (2) и (3), чтобы получить уравнение, связывающее координаты $x$ и $y$ наклоненного эллипса (штрихи рядом с $x$ и $y$ больше не пишем):
+$$
+	\frac{x^2 \cos^2\alpha + 2xy\sin\alpha\cos\alpha + y^2\sin^2\alpha}{a^2} + \frac{x^2 \sin^2\alpha - 2xy\sin\alpha\cos\alpha + y^2\cos^2\alpha}{b^2} = 1,
+$$
+$$
+	x^2(b^2\cos^2\alpha + a^2\sin^2\alpha) + 2xy\sin\alpha\cos\alpha(b^2-a^2) + y^2(b^2\sin^2\alpha + a^2\cos^2\alpha) = b^2a^2.
+$$
+
+Разделим на $a^2$ и введем новые обозначения (для сокращения записей): $c = \cos\alpha, \ \ s = \sin\alpha, \ \ q = \frac{b}{a} \ \ (0<q<1)$:
+\begin{equation}
+	x^2(q^2c^2 + s^2) + 2xysc(q^2-1) + y^2(q^2s^2+c^2) = b^2
+\end{equation}
+
+Главная цель — получить функцию зависимости координат друг от друга, например, $y(x)$. Заметим, что было получено квадратное уравнение с переменными $x$ и $y$. Чтобы получить функцию $y(x)$, запишем квадратное уравнение (4) в виде $Ay^2 + By + C = 0$.
+\begin{equation*}
+	(q^2s^2 + c^2)\cdot y^2 + 2sc(q^2-1)x\cdot y + (x^2(q^2c^2+s^2)-b^2) = 0
+\end{equation*}
+Преобразуем уравнение, чтобы сделать дополнительное новое обозначение (для удобства) $Q=1-q^2, \ (0<Q<1)$. Заметим, что $c^2 + s^2 = \cos^2\alpha + \sin^2\alpha = 1$.
+$$
+	(q^2s^2 - s^2 + s^2 + c^2)\cdot y^2 - 2sc(1-q^2)x\cdot y + (x^2(q^2c^2 - c^2 + c^2 + s^2)-b^2) = 0,
+$$
+$$
+	(q^2s^2 - s^2 + 1)\cdot y^2 - 2sc(1-q^2)x\cdot y + (x^2(q^2c^2 - c^2 + 1)-b^2) = 0,
+$$
+$$
+	(-s^2(1-q^2) + 1)\cdot y^2 - 2sc(1-q^2)x\cdot y + (x^2(-c^2(1-q^2) + 1)-b^2) = 0,
+$$
+$$
+	(1-Qs^2)\cdot y^2 - 2scQx\cdot y + (x^2(1-Qc^2)-b^2) = 0.
+$$
+В уравнении вида $Ay^2 + By + C = 0$ получили: $A=1-Qs^2 \ \ (0 < A < 1), \quad B = -2scQx, \quad C = x^2(1-Qc^2)-b^2 $. 
+
+Решим это уравнение относительно $y$ (найдем корни $y_1$ и $y_2$).
+$$
+	D = B^2 - 4AC = 4s^2c^2Q^2x^2 - 4(1-Qs^2)(x^2(1-Qc^2)-b^2) =
+$$
+$$
+	= 4s^2c^2Q^2x^2 - 4x^2(1-Qc^2) + 4b^2 + 4Qs^2x^2(1-Qc^2) - 4Qs^2b^2 = 
+$$
+$$
+	= 4x^2(s^2c^2Q^2 - (1-Qc^2) + Qs^2(1-Qc^2)) + 4b^2 - 4Qs^2b^2 =
+$$
+$$
+	= 4x^2(s^2c^2Q^2 - 1 + Qc^2 + Qs^2 - Q^2s^2c^2) + 4b^2(1-Qs^2) =
+$$
+$$
+	= 4x^2(s^2c^2Q^2-s^2c^2Q^2 + Q(c^2+s^2) - 1) + 4b^2(1-Qs^2)	 =
+$$
+$$
+	= 4x^2(Q\cdot 1 - 1) + 4b^2(1-Qs^2) = 4x^2(1-q^2 - 1) + 4b^2(1-Qs^2) =
+$$
+$$
+	= -4x^2q^2 + 4b^2(1-Qs^2) = 4(b^2(1-Qs^2) - x^2q^2) =
+$$
+$$
+	= 4b^2(1-Qs^2 - x^2/a^2)
+$$
+
+Теперь запишем корни квадратного уравнения $y_{1/2}$:
+
+$$
+	y_{1/2} = \frac{-B \pm \sqrt{D}}{2A} = \frac{2scQx \pm 2b\sqrt{1-Qs^2-x^2/a^2}}{2(1-Qs^2)} =
+$$
+$$
+	= \frac{scQx \pm b\sqrt{1-Qs^2-x^2/a^2}}{1-Qs^2}
+$$
+Таким образом, получено уравнение вида
+$$ y_{1/2} = C_1\cdot (C_2\cdot x\pm\sqrt{C_3-x^2})$$
+где $C_1, C_2, C_3$ — некоторые константы относительно $x$ (зависят только от $a, b$ и $\alpha$).
+
+Иными словами, получена функция, которая при заданной координате $x$ дает два варианта координаты $y$ — двух точек, которые лежат на повернутом эллипсе:
+
+\begin{equation}
+	y(x) = \frac{scQx \pm b\sqrt{1-Qs^2-x^2/a^2}}{1-Qs^2}
+\end{equation}
+
+Найдем максимальное и минимальное значение $y$. Они будут равны по модулю, потому что центр эллипса находится в точке $(0,0)$, то есть эллипс симметричен относительно центра. Найдем максимальное значение $y$, приравняв производную функции $y(x)$ (то есть корень со знаком + в выражении (5)) к нулю.
+
+$$
+	y'(x) = \frac{1}{1-Qs^2}\left(scQ + b \cdot \frac{-2x/a^2}{2\sqrt{1-Qs^2-x^2/a^2}}\right) =
+$$
+$$
+	= \frac{1}{1-Qs^2}\left(scQ - \frac{x\cdot b/a^2}{\sqrt{1-Qs^2-x^2/a^2}}\right) = 0,
+$$
+$$
+	\Rightarrow\quad  scQ = \frac{x\cdot b/a^2}{\sqrt{1-Qs^2-x^2/a^2}},
+$$
+$$
+	s^2c^2Q^2 = \frac{x^2b^2/a^4}{1-Qs^2-x^2/a^2},
+$$
+$$
+	s^2c^2Q^2(1-Qs^2) - s^2c^2Q^2\cdot x^2/a^2 = x^2b^2/a^4, \quad [\cdot \ a^4]
+$$
+$$
+	s^2c^2Q^2(1-Qs^2)a^4 - s^2c^2Q^2a^2x^2 = x^2b^2,
+$$
+$$
+	x^2(b^2+s^2c^2Q^2a^2) = s^2c^2Q^2(1-Qs^2)a^4,
+$$
+\begin{equation}
+	x^2 = \frac{s^2c^2Q^2(1-Qs^2)a^4}{b^2+s^2c^2Q^2a^2} =
+		[:s^2c^2Q^2a^2] = \frac{a^2(1-Qs^2)}{(q^2/s^2c^2Q^2) + 1}
+\end{equation}
+
+Преобразуем отдельно знаменатель в (6):
+$$
+	\frac{q^2}{s^2c^2Q^2} + 1 = \frac{(1-Q) + s^2c^2Q^2}{s^2c^2Q^2} =
+	\frac{1 - Qs^2 + Qs^2 - Q + s^2c^2Q^2}{s^2c^2Q^2} =
+$$
+$$
+	= \frac{(1-Qs^2) + Q(s^2-1+s^2c^2Q)}{s^2c^2Q^2} = 
+	\frac{(1-Qs^2) - Q(1-s^2-s^2c^2Q)}{s^2c^2Q^2} =
+$$
+$$
+	= \frac{(1-Qs^2) - Q(1-s^2-s^2(1-s^2)Q)}{s^2c^2Q^2} =
+	\frac{(1-Qs^2) - Q(1-s^2-Qs^2+Qs^4)}{s^2c^2Q^2} =
+$$
+$$
+	= \frac{(1-Qs^2) - Q((1-Qs^2)-s^2(1-Qs^2))}{s^2c^2Q^2} = 
+	\frac{(1-Qs^2) - Q(1-Qs^2)(1-s^2)}{s^2c^2Q^2} =
+$$
+$$
+	= \frac{(1-Qs^2) - Q(1-Qs^2)\cdot c^2}{s^2c^2Q^2} =
+	\frac{(1-Qs^2)(1-Qc^2)}{s^2c^2Q^2}
+$$
+
+Теперь подставляем преобразованный знаменатель в выражение (6):
+
+$$
+	x^2 = \frac{a^2(1-Qs^2)}{\left(\frac{(1-Qs^2)(1-Qc^2)}{s^2c^2Q^2} \right)}	 = 
+	\frac{a^2s^2c^2Q^2}{1-Qc^2},
+$$
+
+\begin{equation}
+	x = \pm \ \frac{ascQ}{\sqrt{1-Qc^2}}
+\end{equation}
+
+
+Найдем максимальное значение $y$, которое достигается в точке с положительной абсциссой (7) (со знаком плюс):
+$$
+	y_{\text{max}} = \frac{scQx + b\sqrt{1-Qs^2-x^2/a^2}}{1-Qs^2} = 
+$$
+$$
+	= \frac{x}{1-Qs^2} \cdot \left(scQ + b\sqrt{(1-Qs^2)/x^2 - 1/a^2}\right) =
+$$
+$$
+	= \frac{ascQ}{(1-Qs^2)\sqrt{1-Qc^2}} \cdot 
+	\left(
+		scQ + b\sqrt{(1-Qs^2)(1-Qc^2)/(a^2s^2c^2Q^2)- 1/a^2} \right) =	
+$$
+$$
+	= \frac{ascQ}{(1-Qs^2)\sqrt{1-Qc^2}} \cdot 
+	\left(
+		scQ + b\sqrt{\frac{1-Qc^2-Qs^2+Q^2s^2c^2}{a^2s^2c^2Q^2}- 1/a^2} \right) =	
+$$
+$$
+	= \frac{ascQ}{(1-Qs^2)\sqrt{1-Qc^2}} \cdot 
+	\left(
+		scQ + b\sqrt{\frac{1-Q\cdot 1 + Q^2s^2c^2}{a^2s^2c^2Q^2}- 1/a^2} \right) =
+$$
+$$
+	= \frac{ascQ}{(1-Qs^2)\sqrt{1-Qc^2}} \cdot 
+	\left(
+		scQ + b\sqrt{\frac{q^2 + Q^2s^2c^2}{a^2s^2c^2Q^2}- 1/a^2} \right) =
+$$
+$$
+	= \frac{ascQ}{(1-Qs^2)\sqrt{1-Qc^2}} \cdot 
+	\left(
+		scQ + \frac{b}{a}\sqrt{\frac{q^2 + Q^2s^2c^2}{s^2c^2Q^2}- 1} \right) =
+$$
+$$
+	= \frac{ascQ}{(1-Qs^2)\sqrt{1-Qc^2}} \cdot 
+	\left(
+		scQ + q\sqrt{\frac{q^2}{s^2c^2Q^2} + 1 - 1} \right) =
+$$
+$$
+	= \frac{ascQ}{(1-Qs^2)\sqrt{1-Qc^2}} \cdot 
+	\left(
+		scQ + q\cdot \frac{q}{scQ} \right) =
+$$
+$$
+	= \frac{ascQ}{(1-Qs^2)\sqrt{1-Qc^2}} \cdot 
+	\left(
+		\frac{s^2c^2Q^2 +q^2}{scQ} \right) =
+$$
+\begin{equation}
+	= \frac{a(s^2c^2Q^2 +q^2)}{(1-Qs^2)\sqrt{1-Qc^2}} =
+\end{equation}
+
+Ранее был преобразован знаменатель в (6) и было получено, что
+\begin{equation}
+	\frac{q^2}{s^2c^2Q^2} + 1 = \frac{(1-Qs^2)(1-Qc^2)}{s^2c^2Q^2}
+\end{equation}
+
+Заметим, что левую часть в (9) можно представить как $\frac{q^2 + s^2c^2Q^2}{s^2c^2Q^2}$ и тогда получим:
+
+\begin{equation}
+	q^2 + s^2c^2Q^2 = (1-Qs^2)(1-Qc^2)
+\end{equation}
+
+Подставим (10) в числитель (8) ($y_{\text{max}}$):
+
+\begin{equation}
+	y_{\text{max}} = \frac{a(1-Qs^2)(1-Qc^2)}{(1-Qs^2)\sqrt{1-Qc^2}} = a\sqrt{1-Qc^2}
+\end{equation}
+
+Таким образом, найдено значение $y_{\text{max}}$. Минимальное значение $y_{\text{min}}$ равно по модулю $y_{\text{max}}$, взятым со знаком минус.
+
+Теперь найдем максимальное значение $x_{\text{max}}$. Воспользуемся выражением для производной $y'(x)$ и найдем такие точки $x$, в которых производная $y'(x)$ стремится к бесконечности (то есть в этих точках дуга эллипса заворачивается).
+\begin{equation}
+	y'(x) = \frac{1}{1-Qs^2}\left(scQ - \frac{x\cdot b/a^2}{\sqrt{1-Qs^2-x^2/a^2}}\right)
+\end{equation}
+
+В выражении (12) правая часть стремится к бесконечности тогда, когда второе слагаемое в скобках стремится к бесконечности. Запишем его отдельно:
+
+$$
+	\frac{xb/a^2}{\sqrt{1-Qs^2-x^2/a^2}} \xrightarrow[]{} \infty \Leftrightarrow	\sqrt{\frac{x^2}{1-Qs^2-x^2/a^2}} \xrightarrow[]{} \infty \Leftrightarrow
+$$
+$$
+	\Leftrightarrow \frac{1-Qs^2-x^2/a^2}{x^2} \xrightarrow[]{} 0 \Leftrightarrow \frac{1-Qs^2}{x^2} - \frac{1}{a^2} \xrightarrow[]{} 0 \Leftrightarrow
+$$
+$$
+	\Leftrightarrow \frac{1-Qs^2}{x^2} \xrightarrow[]{} \frac{1}{a^2} \Leftrightarrow x^2 \xrightarrow[]{} a^2(1-Qs^2) \Leftrightarrow x \xrightarrow[]{} a\sqrt{1-Qs^2}
+$$
+Таким образом, найдены максимальные по модулю значения $x$ и $y$:
+\begin{equation}
+y_{\text{max}} = a\sqrt{1-Qc^2},
+\end{equation}
+\begin{equation}
+x_{\text{max}} = a\sqrt{1-Qs^2}.
+\end{equation}
+
+Перепишем выражение функции $y(x)$ из (5), применяя (14):
+
+$$
+	y(x) = \frac{1}{1-Qs^2} \left( scQx \pm b\sqrt{\frac{1}{a^2}(a^2(1-Qs^2) - x^2)} \right) =
+$$
+\begin{equation}
+	= \frac{1}{1-Qs^2} \left( scQx \pm q\sqrt{x_{\text{max}}^2 - x^2)} \right)
+\end{equation}
+
+Таким образом, были получены константы $x_{\text{max}}$, $y_{\text{max}}$ и функция $y(x)$, которая дает два значения $y$ для заданной точки $x$. В программе можно построить эллипс, пробегая все значения $x$ от $-x_{\text{max}}$ до $x_{\text{max}}$ и заполняя все пиксели в столбце внутри эллипса при заданном $x$ от $\frac{1}{1-Qs^2}\left( scQx - q\sqrt{x_{\text{max}}^2-x^2} \right)$ до $\frac{1}{1-Qs^2}\left( scQx + q\sqrt{x_{\text{max}}^2-x^2} \right)$.
+
+\newpage
+
+\subsection*{Python}
+Для того, чтобы уменьшить количество арифметических операций при вычислении $y(x)$ по формуле (15), выделим в ней константы (которые можно вычислить отдельно заранее):
+
+$$
+	y(x) = \frac{scQ}{1-Qs^2} \cdot x \pm \frac{q}{1-Qs^2} \cdot \sqrt{x_{\text{max}}^2-x^2},
+$$
+$$
+	y(x) = C_1 \cdot x \pm C_2 \cdot \sqrt{C_3 - x^2},
+$$
+где $C_1 = \frac{scQ}{1-Qs^2}, \quad C_2 = \frac{q}{1-Qs^2}, \quad C_3=x_{\text{max}}^2$.
+
+
+\end{document}
